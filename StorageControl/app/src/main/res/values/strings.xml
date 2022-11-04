@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">StorageControl</string>
+    <string name="msg_scan_barcode">Place a barcode inside the viewfinder rectangle to scan it</string>
+</resources>

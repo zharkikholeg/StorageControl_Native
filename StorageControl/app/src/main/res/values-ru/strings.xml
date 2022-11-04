@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">StorageControl</string>
+    <string name="msg_scan_barcode">Чтобы сканировать штрих-код, поместите его в прямоугольник видоискателя</string>
+</resources>
