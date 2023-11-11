@@ -1,16 +1,18 @@
 package ru.partner.storagecontrol;
 
 import android.os.Handler;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 
-import org.xwalk.core.JavascriptInterface;
-import org.xwalk.core.XWalkView;
+
+//import org.xwalk.core.XWalkView;
 
 public class JavaScriptInterface {
-    private XWalkView webView;
+    private WebView webView;
     private MainActivity mainActivity;
     private Handler interfaceHandler;
 
-    JavaScriptInterface(XWalkView webView, MainActivity mainActivity) {
+    JavaScriptInterface(WebView webView, MainActivity mainActivity) {
         this.webView = webView;
         this.mainActivity = mainActivity;
         interfaceHandler = new Handler();

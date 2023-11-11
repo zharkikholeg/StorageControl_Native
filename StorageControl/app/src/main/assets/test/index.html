@@ -3,7 +3,8 @@
 <head>
     <title>BarScanner</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<meta name="viewport" content="initial-scale=1.0,user-scalable=no">
+	<!-- <meta name="viewport" content="initial-scale=1.0,user-scalable=no"> -->
+	<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
 	<meta name="apple-mobile-web-app-capable" content="yes" />	
     <meta http-equiv="X-UA-Compatible" content="IE=edge" >
 	
@@ -37,7 +38,7 @@
 			display: flex;
 			flex-direction: column;
 			height: 100%;
-			justify-content: center;
+			margin-top: 10%;
 			align-items: center;
 		}
 
@@ -68,7 +69,6 @@
 			align-items: center;
 			text-align: center;
 			margin-top: 15px;
-			font-size: 2.0em;
 			word-break: break-all;
 		}
 
@@ -102,6 +102,7 @@
 </div>
 
 <script src="jquery-3.1.0.js"></script>
+<script type="text/javascript" src="moment/moment.js"></script>
 <script src="app.js"></script>
 <script>
 	$(document).ready(function () {	window.barScanner.run(); });

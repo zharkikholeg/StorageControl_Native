@@ -1,10 +1,23 @@
 package ru.partner.storagecontrol;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+
+import androidx.annotation.RequiresApi;
+//import androidx.webkit.WebViewAssetLoader;
+//import androidx.webkit.WebViewClientCompat;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -13,12 +26,12 @@ import com.honeywell.aidc.BarcodeFailureEvent;
 import com.honeywell.aidc.BarcodeReadEvent;
 import com.honeywell.aidc.BarcodeReader;
 
-import org.xwalk.core.XWalkActivity;
-import org.xwalk.core.XWalkPreferences;
-import org.xwalk.core.XWalkView;
+//import org.xwalk.core.XWalkActivity;
+//import org.xwalk.core.XWalkPreferences;
+//import org.xwalk.core.XWalkView;
 
-public class MainActivity extends XWalkActivity implements BarcodeReader.BarcodeListener, IBarcodeListenerCustom {
-    private XWalkView mWebView;
+public class MainActivity extends Activity implements BarcodeReader.BarcodeListener, IBarcodeListenerCustom {
+    private WebView mWebView;
     private View mDecorView;
     private JavaScriptInterface javaScriptIntarface;
 
@@ -31,14 +44,46 @@ public class MainActivity extends XWalkActivity implements BarcodeReader.Barcode
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+//        if (android.os.Build.VERSION.SDK_INT > 9)
+//        {
+//            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+//            StrictMode.setThreadPolicy(policy);
+//        }
         mWebView = findViewById(R.id.mw_webview);
+//        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+//                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+//                .build();
+//        mWebView.setWebViewClient(new LocalContentWebViewClient(assetLoader));
+        WebSettings webSettings = mWebView.getSettings(); // получаем объект настроек WebView
+        webSettings.setJavaScriptEnabled(true); // включаем js
+        webSettings.setSupportZoom(false);
+        webSettings.setSupportMultipleWindows(false);
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowFileAccessFromFileURLs(true);
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
+        webSettings.setAllowContentAccess(true);
+        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+
+        // включаем возможность дебага черех Chrome Devtools
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+
+        mWebView.clearCache(false);
+        mWebView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);; // по идее, должно решить проблему с тем, что с https-страницы идут http-запросы
+        javaScriptIntarface = new JavaScriptInterface(mWebView, this); // создаём объект javascript-интерфейса
+        mWebView.addJavascriptInterface(javaScriptIntarface, "androidInterface"); // добавляем этот объект интерфейса в вебвью
+        //mWebView.loadUrl("file:///android_asset/test/index.html");
+        mWebView.loadUrl("file:///android_asset/www/sc.html");
         mDecorView = getWindow().getDecorView();
-        hideSystemUI();
+        //hideSystemUI();
         mDecorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
             @Override
             public void onSystemUiVisibilityChange(int visibility) {
                 if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) { // The system bars are visible
-                    hideSystemUI();
+                    //hideSystemUI();
                 }
             }
         });
@@ -54,24 +99,12 @@ public class MainActivity extends XWalkActivity implements BarcodeReader.Barcode
         barcodeScannerM3 = new BarcodeScannerM3(this, this);
     }
 
-    @Override
-    protected void onXWalkReady() {
-        XWalkPreferences.setValue( XWalkPreferences.ALLOW_UNIVERSAL_ACCESS_FROM_FILE, true );
-        XWalkPreferences.setValue( XWalkPreferences.JAVASCRIPT_CAN_OPEN_WINDOW, true );
-        XWalkPreferences.setValue(XWalkPreferences.PROFILE_NAME, false );
-        XWalkPreferences.setValue( XWalkPreferences.REMOTE_DEBUGGING, true );
-        XWalkPreferences.setValue( XWalkPreferences.SUPPORT_MULTIPLE_WINDOWS, false );
-        javaScriptIntarface = new JavaScriptInterface(mWebView, this);
-        mWebView.addJavascriptInterface(javaScriptIntarface, "androidInterface");
-        mWebView.load("file:///android_asset/www/sc.html", null);
-//        mWebView.load("file:///android_asset/test/index.html", null);
-    }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus){
         super.onWindowFocusChanged(hasFocus);
         if(hasFocus){
-            hideSystemUI();
+            //hideSystemUI();
         }
     }
 
@@ -168,7 +201,7 @@ public class MainActivity extends XWalkActivity implements BarcodeReader.Barcode
     }
 
     @Override
-     public void onBarcodeEvent(BarcodeReadEvent barcodeReadEvent) {
+    public void onBarcodeEvent(BarcodeReadEvent barcodeReadEvent) {
         Log.d("Scanner", barcodeReadEvent.getBarcodeData());
         String barcode = barcodeReadEvent.getBarcodeData();
         barcode = barcode.replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t");
@@ -192,5 +225,17 @@ public class MainActivity extends XWalkActivity implements BarcodeReader.Barcode
     @Override
     public void onFailureEvent() {
         javaScriptIntarface.scanningBarCodeFailure();
+    }
+
+    // отключаем кнопку "назад"
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Check if the key event was the Back button and if there's history
+        if ((keyCode == KeyEvent.KEYCODE_BACK) && mWebView.canGoBack()) {
+            mWebView.goBack();
+            return true;
+        } else {
+            return true;
+        }
     }
 }
